@@ -1,0 +1,52 @@
+version: '3.8'
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongo_db
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongoadmin
+      - MONGO_INITDB_ROOT_PASSWORD=secret
+    networks:
+      - fullstack-chatapp
+    volumes:
+      - mongo-data:/data/db
+  backend:
+    build:
+      context: ./backend
+    container_name: fullstack-backend
+    networks:
+      - fullstack-chatapp
+    environment:
+      - NODE_ENV=PRODUCTION
+      - MONGODB_URI=mongodb://mongoadmin:secret@mongodb:27017/dbname?authSource=admin
+      - JWT_SECRET=JjWJ3QZlwX71q8FdKQc6YkGc8lfnwiknNRImcnmihlE=
+      - PORT=5001
+    ports:
+      - "5001:5001"
+    depends_on:
+      - mongodb
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: fullstack-frontend
+    ports:
+      - "80:80"
+    networks:
+      - fullstack-chatapp
+    depends_on:
+      - backend
+networks:
+  fullstack-chatapp:
+    driver: bridge
+volumes:
+  mongo-data:
+
+
